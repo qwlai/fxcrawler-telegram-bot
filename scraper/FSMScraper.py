@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
 from datetime import datetime as dt
-from TelegramUtils import TelegramUtils
+from utils.TelegramUtils import TelegramUtils
 from pymongo import MongoClient
 import re
 

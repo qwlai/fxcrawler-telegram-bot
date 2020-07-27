@@ -3,3 +3,6 @@ env/*
 .vscode/*
 __pycache__/*
 geckodriver.log
+scraper/__pycache__/
+
+utils/__pycache__/
