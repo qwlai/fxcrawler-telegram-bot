@@ -77,7 +77,7 @@ class FSMScraper():
             print("One record inserted successfully at %s." % fx_dict['Date'])
             message_details = self.prepare_message_for_telegram(fx_dict)
             
-            if message_details['is_old_sgd_to_usd_better'] or message_details['is_old_usd_to_sgd_better']:
+            if (message_details['is_old_sgd_to_usd_better'] or message_details['is_old_usd_to_sgd_better']) and message_details['is_rate_updated']:
                 self.telegram.send_message(message_details['bot_message'])
             else:
                 if message_details['is_new_record']:
@@ -118,7 +118,7 @@ class FSMScraper():
             if float(best_usd_to_sgd['USD_to_SGD']) > float(fx_dict['USD_to_SGD']):
                 is_old_usd_to_sgd_better = True
 
-        best_rate_message = "__*Best Rates*__"
+        best_rate_message = "__*Historical Best Rates*__"
 
         if is_old_sgd_to_usd_better and is_old_usd_to_sgd_better:
             bot_message = "%s\n%s\n%s\n\n%s\n%s\n%s" % (
@@ -137,6 +137,7 @@ class FSMScraper():
             'is_old_sgd_to_usd_better' : is_old_sgd_to_usd_better,
             'is_old_usd_to_sgd_better' : is_old_usd_to_sgd_better,
             'is_new_record' : True if size == 1 else False,
+            'is_rate_updated': self.is_rate_updated(fx_dict), 
             'bot_message' : bot_message
         }
 
@@ -144,13 +145,25 @@ class FSMScraper():
         """
         Returns the historical best fx rate
         """
-        size = best_sgd_to_usd = self.fx_rate_history_col.find().sort(
+        size = self.fx_rate_history_col.find().sort(
             [("SGD_to_USD", -1), ("Date", -1)]).limit(2)
         best_sgd_to_usd = self.fx_rate_history_col.find().sort(
             [("SGD_to_USD", -1), ("Date", -1)]).limit(1)[0]
         best_usd_to_sgd = self.fx_rate_history_col.find().sort(
             [("USD_to_SGD", -1), ("Date", -1)]).limit(1)[0]
         return best_sgd_to_usd, best_usd_to_sgd, size.count()
+    
+    def is_rate_updated(self, fx_dict):
+        """
+        Returns True is rate is updated, otherwise False
+        """
+        previous_record = self.fx_rate_history_col.find().sort(
+            [("Date", -1)]).limit(2)[1]
+    
+        if previous_record['SGD_to_USD'] == fx_dict['SGD_to_USD'] and previous_record['USD_to_SGD'] == fx_dict['USD_to_SGD']:
+            return False
+        return True
+        
 
     def tear_down(self):
         """
