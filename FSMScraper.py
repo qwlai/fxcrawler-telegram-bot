@@ -76,15 +76,15 @@ class FSMScraper():
             self.fx_rate_history_col.insert_one(fx_dict)
             print("One record inserted successfully at %s." % fx_dict['Date'])
             message_details = self.prepare_message_for_telegram(fx_dict)
-            
+
             if (message_details['is_old_sgd_to_usd_better'] or message_details['is_old_usd_to_sgd_better']) and message_details['is_rate_updated']:
                 self.telegram.send_message(message_details['bot_message'])
             else:
                 if message_details['is_new_record']:
                     self.telegram.send_message(message_details['bot_message'])
                 else:
-                    return  
-                
+                    return
+
         except Exception as e:
             print("An Exception %e has occurred.", e)
 
@@ -104,11 +104,13 @@ class FSMScraper():
         is_old_usd_to_sgd_better = False
 
         best_sgd_to_usd, best_usd_to_sgd, size = self.get_historical_best_rate()
-        
-        best_sgd_to_usd_message = "SGD\-USD: *%s* on *%s*" % (re.escape(
-            best_sgd_to_usd['SGD_to_USD']), best_sgd_to_usd['Date'].strftime("%d/%b/%Y %H:%M:%S"))
-        best_usd_to_sgd_message = "USD\-SGD: *%s* on *%s*" % (re.escape(
-            best_usd_to_sgd['USD_to_SGD']), best_usd_to_sgd['Date'].strftime("%d/%b/%Y %H:%M:%S"))
+        diff_sgd_to_usd, diff_usd_to_sgd = self.get_difference_with_best_rate(
+            fx_dict, best_sgd_to_usd, best_usd_to_sgd)
+
+        best_sgd_to_usd_message = "SGD\-USD: *%s* on *%s*\nWith 1000 SGD, you get *%s USD* more than current\." % (re.escape(
+            best_sgd_to_usd['SGD_to_USD']), best_sgd_to_usd['Date'].strftime("%d/%b/%Y %H:%M:%S"), re.escape(str(diff_sgd_to_usd)))
+        best_usd_to_sgd_message = "USD\-SGD: *%s* on *%s*\nWith 1000 USD, you get *%s SGD* more than current\." % (re.escape(
+            best_usd_to_sgd['USD_to_SGD']), best_usd_to_sgd['Date'].strftime("%d/%b/%Y %H:%M:%S"), re.escape(str(diff_usd_to_sgd)))
 
         if best_sgd_to_usd is not None:
             if float(best_sgd_to_usd['SGD_to_USD']) > float(fx_dict['SGD_to_USD']):
@@ -132,13 +134,13 @@ class FSMScraper():
         else:
             bot_message = "%s\n%s\n%s" % (
                 date_message, sgd_to_usd_message, usd_to_sgd_message)
-            
+
         return {
-            'is_old_sgd_to_usd_better' : is_old_sgd_to_usd_better,
-            'is_old_usd_to_sgd_better' : is_old_usd_to_sgd_better,
-            'is_new_record' : True if size == 1 else False,
-            'is_rate_updated': self.is_rate_updated(fx_dict), 
-            'bot_message' : bot_message
+            'is_old_sgd_to_usd_better': is_old_sgd_to_usd_better,
+            'is_old_usd_to_sgd_better': is_old_usd_to_sgd_better,
+            'is_new_record': True if size == 1 else False,
+            'is_rate_updated': self.is_rate_updated(fx_dict),
+            'bot_message': bot_message
         }
 
     def get_historical_best_rate(self):
@@ -152,18 +154,27 @@ class FSMScraper():
         best_usd_to_sgd = self.fx_rate_history_col.find().sort(
             [("USD_to_SGD", -1), ("Date", -1)]).limit(1)[0]
         return best_sgd_to_usd, best_usd_to_sgd, size.count()
-    
+
+    def get_difference_with_best_rate(self, fx_dict, best_sgd_to_usd, best_usd_to_sgd):
+        """
+        Returns the difference as compared to best rate in terms of $1000
+        """
+        diff_sgd_to_usd = float(
+            best_sgd_to_usd['SGD_to_USD']) * 1000 - float(fx_dict['SGD_to_USD']) * 1000
+        diff_usd_to_sgd = float(
+            best_usd_to_sgd['USD_to_SGD']) * 1000 - float(fx_dict['USD_to_SGD']) * 1000
+        return round(diff_sgd_to_usd, 2), round(diff_usd_to_sgd, 2)
+
     def is_rate_updated(self, fx_dict):
         """
         Returns True is rate is updated, otherwise False
         """
         previous_record = self.fx_rate_history_col.find().sort(
             [("Date", -1)]).limit(2)[1]
-    
+
         if previous_record['SGD_to_USD'] == fx_dict['SGD_to_USD'] and previous_record['USD_to_SGD'] == fx_dict['USD_to_SGD']:
             return False
         return True
-        
 
     def tear_down(self):
         """
