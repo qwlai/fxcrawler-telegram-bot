@@ -1,4 +1,4 @@
-from scraper.FSMScraper import FSMScraper
+from scraper.fsm_scraper import FSMScraper
 
 def main():
     scraper = FSMScraper('https://secure.fundsupermart.com/fsm/foreign-exchange-rates')
