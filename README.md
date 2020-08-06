@@ -34,6 +34,6 @@ export channel_id=bot_channel_id
 ```bash
 watch --interval=3600 python web_scraper.py 
 
-Alternatively, using crontab:
+Alternatively, using crontab: crontab -e
 */30 * * * * cd /home/dev/fxcrawler-telegram-bot && . /home/dev/.bash_profile && env/bin/python3 web_scraper.py
 ```
