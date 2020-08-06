@@ -27,13 +27,19 @@ pip3 install -r requirements.txt
 ```
 vim ~/.bash_profile
 export bot_token=tele_bot_token
-export channel_id=bot_channel_id
+export chat_id=bot_chat_id
 ```
 
 ### Running at an interval of 30 minutes 
 ```bash
 watch --interval=3600 python web_scraper.py 
+```
+### Alternatively, using crontab:
+```
+crontab -e
 
-Alternatively, using crontab: crontab -e
+Add the following line:
 */30 * * * * cd /home/dev/fxcrawler-telegram-bot && . /home/dev/.bash_profile && env/bin/python3 web_scraper.py
+
+sudo service crontab reload
 ```
