@@ -13,6 +13,11 @@ virtualenv env
 source env/bin/activate
 ```
 
+### Set up geckodriver, download from https://github.com/mozilla/geckodriver/releases
+```
+sudo cp geckodriver /usr/bin/geckodriver
+```
+
 ### Install the requirements
 ```bash
 pip3 install -r requirements.txt
