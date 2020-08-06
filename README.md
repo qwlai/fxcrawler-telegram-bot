@@ -23,7 +23,17 @@ sudo cp geckodriver /usr/bin/geckodriver
 pip3 install -r requirements.txt
 ```
 
+### Add environment variables in ~/.bash_profile
+```
+vim ~/.bash_profile
+export bot_token=tele_bot_token
+export channel_id=bot_channel_id
+```
+
 ### Running at an interval of 30 minutes 
 ```bash
 watch --interval=3600 python web_scraper.py 
+
+Alternatively, using crontab:
+*/30 * * * * cd /home/dev/fxcrawler-telegram-bot && . /home/dev/.bash_profile && env/bin/python3 web_scraper.py
 ```
